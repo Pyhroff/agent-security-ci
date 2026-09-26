@@ -1,0 +1,65 @@
+name: agent security gate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # These three tools are private repos, so they're pulled in with a
+      # PAT (TOOLS_PAT) rather than published to PyPI. Same author owns
+      # all three; this simulates how a team would install internal
+      # security tooling that isn't public yet.
+      - name: Install mcpaudit / loopcheck / memsentry
+        env:
+          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
+        run: |
+          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/mcpaudit.git"
+          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/loopcheck.git"
+          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/memsentry.git"
+
+      # --- Clean toy agent: every gate must pass for real. ---
+      - name: mcpaudit — clean agent (must pass)
+        run: mcpaudit scan --fail-on high -- python toy_agent/clean/mcp_server.py
+
+      - name: loopcheck — clean agent (must pass)
+        run: loopcheck analyze toy_agent/clean/trace.json --fail-on medium
+
+      - name: memsentry — clean agent (must pass)
+        run: memsentry toy_agent/clean/memory.md --fail-on high
+
+      # --- Vulnerable toy agent: each scan is EXPECTED to fail. We assert
+      # the nonzero exit ourselves, so a red flag here would mean the gate
+      # stopped catching a known-bad fixture, not that CI is broken. ---
+      - name: mcpaudit — vulnerable agent (must be BLOCKED)
+        run: |
+          if mcpaudit scan --fail-on high -- python toy_agent/vulnerable/mcp_server.py; then
+            echo "::error::mcpaudit did not flag the poisoned tool description — gate regression!"
+            exit 1
+          fi
+          echo "mcpaudit correctly blocked the poisoned tool description."
+
+      - name: loopcheck — vulnerable agent (must be BLOCKED)
+        run: |
+          if loopcheck analyze toy_agent/vulnerable/trace.json --fail-on medium; then
+            echo "::error::loopcheck did not flag the thrashing loop — gate regression!"
+            exit 1
+          fi
+          echo "loopcheck correctly blocked the wasteful trace."
+
+      - name: memsentry — vulnerable agent (must be BLOCKED)
+        run: |
+          if memsentry toy_agent/vulnerable/memory.md --fail-on high; then
+            echo "::error::memsentry did not flag the poisoned memory file — gate regression!"
+            exit 1
+          fi
+          echo "memsentry correctly blocked the poisoned memory file."

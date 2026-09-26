@@ -1,0 +1,15 @@
+{
+  "agent_name": "clean-toy-agent",
+  "goal": "Get the weather in Austin and report back",
+  "model": "gpt-4o-mini",
+  "input_cost_per_1k": 0.15,
+  "output_cost_per_1k": 0.6,
+  "steps": [
+    {"index": 0, "turn": 0, "reasoning": "Need the weather.", "tool_name": "get_weather",
+     "tool_args": {"city": "Austin"}, "tool_result": "72F and sunny", "is_error": false,
+     "input_tokens": 120, "output_tokens": 30},
+    {"index": 1, "turn": 1, "reasoning": "Got it, report to user.", "tool_name": null,
+     "tool_args": {}, "tool_result": null, "is_error": false,
+     "input_tokens": 90, "output_tokens": 20}
+  ]
+}
