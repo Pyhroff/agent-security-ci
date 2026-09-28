@@ -15,17 +15,19 @@ jobs:
         with:
           python-version: "3.11"
 
-      # These three tools are private repos, so they're pulled in with a
+      # These five tools are private repos, so they're pulled in with a
       # PAT (TOOLS_PAT) rather than published to PyPI. Same author owns
-      # all three; this simulates how a team would install internal
+      # all of them; this simulates how a team would install internal
       # security tooling that isn't public yet.
-      - name: Install mcpaudit / loopcheck / memsentry
+      - name: Install mcpaudit / loopcheck / memsentry / ragsentry / trainsentry
         env:
           TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
         run: |
           pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/mcpaudit.git"
           pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/loopcheck.git"
           pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/memsentry.git"
+          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/ragsentry.git"
+          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/trainsentry.git"
 
       # --- Clean toy agent: every gate must pass for real. ---
       - name: mcpaudit — clean agent (must pass)
@@ -36,6 +38,12 @@ jobs:
 
       - name: memsentry — clean agent (must pass)
         run: memsentry toy_agent/clean/memory.md --fail-on high
+
+      - name: ragsentry — clean agent (must pass)
+        run: ragsentry toy_agent/clean/rag_doc.md --fail-on high
+
+      - name: trainsentry — clean agent (must pass)
+        run: trainsentry toy_agent/clean/training_data.jsonl --fail-on high
 
       # --- Vulnerable toy agent: each scan is EXPECTED to fail. We assert
       # the nonzero exit ourselves, so a red flag here would mean the gate
@@ -63,3 +71,38 @@ jobs:
             exit 1
           fi
           echo "memsentry correctly blocked the poisoned memory file."
+
+      - name: ragsentry — vulnerable agent (must be BLOCKED)
+        run: |
+          if ragsentry toy_agent/vulnerable/rag_doc.md --fail-on high; then
+            echo "::error::ragsentry did not flag the poisoned RAG document — gate regression!"
+            exit 1
+          fi
+          echo "ragsentry correctly blocked the poisoned RAG document."
+
+      - name: trainsentry — vulnerable agent (must be BLOCKED)
+        run: |
+          if trainsentry toy_agent/vulnerable/training_data.jsonl --fail-on high; then
+            echo "::error::trainsentry did not flag the poisoned training example — gate regression!"
+            exit 1
+          fi
+          echo "trainsentry correctly blocked the poisoned training example."
+
+      # --- Adversarial-tooling regression check. adversagen is the
+      # red-team counterpart to the five scanners above: it wires
+      # RealScannerDefender straight into mcpaudit/memsentry/ragsentry's
+      # actual CLIs (see its README). Running its own test suite here
+      # means that if a future change to any of those three scanners
+      # breaks how adversagen calls them -- a CLI flag rename, an exit
+      # code change, an output-format change -- THIS job goes red, not
+      # just adversagen's own separate CI. That's a real cross-repo
+      # regression this gate is positioned to catch that no single
+      # repo's own tests can.
+      - name: Clone and test adversagen (adversarial-tooling regression check)
+        env:
+          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
+        run: |
+          git clone "https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/adversagen.git" /tmp/adversagen
+          cd /tmp/adversagen
+          pip install -r requirements.txt
+          python3 -m pytest tests/ -q
