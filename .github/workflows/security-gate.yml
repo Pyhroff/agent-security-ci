@@ -45,6 +45,15 @@ jobs:
       - name: trainsentry — clean agent (must pass)
         run: trainsentry toy_agent/clean/training_data.jsonl --fail-on high
 
+      - name: memsentry — clean agent, goal_hijacking fixture (must pass)
+        run: memsentry toy_agent/clean/goal_hijack_memory.md --fail-on high
+
+      - name: ragsentry — clean agent, fake_remediation fixture (must pass)
+        run: ragsentry toy_agent/clean/fake_remediation_doc.md --fail-on high
+
+      - name: trainsentry — clean agent, goal_hijacking fixture (must pass)
+        run: trainsentry toy_agent/clean/goal_hijack_training.jsonl --fail-on high
+
       # --- Vulnerable toy agent: each scan is EXPECTED to fail. We assert
       # the nonzero exit ourselves, so a red flag here would mean the gate
       # stopped catching a known-bad fixture, not that CI is broken. ---
@@ -87,6 +96,35 @@ jobs:
             exit 1
           fi
           echo "trainsentry correctly blocked the poisoned training example."
+
+      # --- New detection-capability upgrades (memsentry v1.1.0 / ragsentry
+      # v1.1.0 / trainsentry v1.1.0), each exercised against a fixture that
+      # ONLY the new check catches -- not the older instruction_injection
+      # patterns -- so a future regression in the new check specifically
+      # turns this gate red, not just the older ones. ---
+      - name: memsentry — vulnerable agent, goal_hijacking fixture (must be BLOCKED)
+        run: |
+          if memsentry toy_agent/vulnerable/goal_hijack_memory.md --fail-on high; then
+            echo "::error::memsentry's goal_hijacking check did not flag the redirected-goal memory line — gate regression!"
+            exit 1
+          fi
+          echo "memsentry correctly blocked the goal-hijacking memory line."
+
+      - name: ragsentry — vulnerable agent, fake_remediation fixture (must be BLOCKED)
+        run: |
+          if ragsentry toy_agent/vulnerable/fake_remediation_doc.md --fail-on high; then
+            echo "::error::ragsentry's fake_remediation check did not flag the Agentjacking-style document — gate regression!"
+            exit 1
+          fi
+          echo "ragsentry correctly blocked the fake-remediation document."
+
+      - name: trainsentry — vulnerable agent, goal_hijacking fixture (must be BLOCKED)
+        run: |
+          if trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high; then
+            echo "::error::trainsentry's goal_hijacking check did not flag the redirected-goal training example — gate regression!"
+            exit 1
+          fi
+          echo "trainsentry correctly blocked the goal-hijacking training example."
 
       # --- Adversarial-tooling regression check. adversagen is the
       # red-team counterpart to the five scanners above: it wires
