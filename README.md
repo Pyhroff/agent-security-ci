@@ -1,40 +1,65 @@
-# agent-security-ci
+# 🧪 agent-security-ci
 
-Cross-repository CI harness for the Pyhroff AI-agent security tooling suite.
+<div align="center">
 
-The repository exercises the scanners against known-good and known-bad fixtures and runs adversarial regression tests. A failing gate therefore signals a false-positive regression, missed detection, integration break, or environment problem.
+**Cross-repository regression infrastructure for the Pyhroff AI-security portfolio.**
 
-## Covered tools
+[![CI](https://github.com/Pyhroff/agent-security-ci/actions/workflows/ci.yml/badge.svg)](https://github.com/Pyhroff/agent-security-ci/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+</div>
+
+---
+
+## Purpose
+
+A scanner's unit tests prove its own rules execute correctly.
+
+`agent-security-ci` asks the harder question:
+
+> **Do the scanners still work together after one of them changes?**
+
+The harness exercises known-good and known-bad fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite).
+
+## Covered systems
 
 | Tool | Surface |
 |---|---|
-| mcpaudit | MCP tool poisoning and scope checks |
-| loopcheck | agent-loop waste and thrashing |
-| memsentry | memory injection |
+| mcpaudit | MCP poisoning and permission scope |
+| memsentry | Persistent memory injection |
 | ragsentry | RAG/document injection |
-| trainsentry | training-data poisoning |
-| adversagen | adaptive adversarial regression testing |
+| trainsentry | Training-data poisoning |
+| loopcheck | Agent-loop waste and thrashing |
+| adversagen | Adaptive adversarial regression experiments |
+| wormsentry | Package-worm behavior |
 
-## Test model
+## What the gate catches
 
-Clean fixtures must remain below the CI threshold. Vulnerable fixtures must produce a blocking result. Capability-specific fixtures independently exercise newer detector categories.
+**Missed detection** — a planted vulnerable fixture stops triggering.
 
-## Security properties
+**False-positive regression** — a clean fixture starts triggering.
 
-The workflow uses least-privilege contents read permissions, cancels stale runs, bounds execution time, verifies scanner CLIs, fails closed on missed detections, and tests cross-repository compatibility through adversagen.
+**Integration drift** — a scanner's CLI, schema, output, or dependency changes break downstream tooling.
 
-## Local reproduction
+## CI posture
 
-The CI environment expects `TOOLS_PAT` with read access to the private scanner repositories.
+Hardened workflows use least-privilege permissions, bounded execution, stale-run cancellation, explicit failure states, and immutable action references where enabled.
+
+Private cross-repository jobs require an appropriate read-only repository credential. Missing credentials are treated as an infrastructure/configuration failure, never as permission to bypass a security gate.
+
+## Local development
 
 ```bash
-export TOOLS_PAT=...
-for repo in mcpaudit loopcheck memsentry ragsentry trainsentry; do
-  pip install "git+https://x-access-token:$TOOLS_PAT@github.com/Pyhroff/$repo.git"
-done
+python -m pytest -q
 ```
 
-The purpose of this repository is integration: the individual scanners answer whether an artifact looks unsafe; this repository answers whether they still work together after one of them changes.
+## Relationship to aisec-suite
+
+**aisec-suite** is the product-facing umbrella and common CLI.
+
+**agent-security-ci** is the compatibility and regression harness.
+
+Keeping those responsibilities separate preserves a clean product boundary.
 
 ## License
 
