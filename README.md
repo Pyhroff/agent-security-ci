@@ -19,7 +19,7 @@ A scanner's unit tests prove its own rules execute correctly.
 
 > **Do the scanners still work together after one of them changes?**
 
-The harness exercises known-good and known-bad fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite).
+The harness exercises clean, vulnerable, and adversarial fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite).
 
 ## Covered systems
 
@@ -30,8 +30,8 @@ The harness exercises known-good and known-bad fixtures across the portfolio and
 | ragsentry | RAG/document injection |
 | trainsentry | Training-data poisoning |
 | loopcheck | Agent-loop waste and thrashing |
-| adversagen | Adaptive adversarial regression experiments |
 | wormsentry | Package-worm behavior |
+| adversagen | Adaptive adversarial regression experiments |
 
 ## What the gate catches
 
@@ -45,21 +45,21 @@ The harness exercises known-good and known-bad fixtures across the portfolio and
 
 Hardened workflows use least-privilege permissions, bounded execution, stale-run cancellation, explicit failure states, and immutable action references where enabled.
 
-Private cross-repository jobs require an appropriate read-only repository credential. Missing credentials are treated as an infrastructure/configuration failure, never as permission to bypass a security gate.
+Private cross-repository jobs require an appropriate read-only repository credential. Missing credentials are treated as infrastructure/configuration failures, never as a reason to bypass a security gate.
 
-## Local development
+## Relationship to aisec-suite
+
+**aisec-suite** = product-facing umbrella and common CLI.
+
+**agent-security-ci** = compatibility and regression harness.
+
+The two layers intentionally solve different problems.
+
+## Development
 
 ```bash
 python -m pytest -q
 ```
-
-## Relationship to aisec-suite
-
-**aisec-suite** is the product-facing umbrella and common CLI.
-
-**agent-security-ci** is the compatibility and regression harness.
-
-Keeping those responsibilities separate preserves a clean product boundary.
 
 ## License
 
