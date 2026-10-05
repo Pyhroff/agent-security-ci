@@ -53,8 +53,6 @@ Private cross-repository jobs require an appropriate read-only repository creden
 
 **agent-security-ci** = compatibility and regression harness.
 
-The two layers intentionally solve different problems.
-
 ## Development
 
 ```bash
