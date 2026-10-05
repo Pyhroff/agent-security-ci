@@ -5,149 +5,90 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-security-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   security-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
-      # These five tools are private repos, so they're pulled in with a
-      # PAT (TOOLS_PAT) rather than published to PyPI. Same author owns
-      # all of them; this simulates how a team would install internal
-      # security tooling that isn't public yet.
-      - name: Install mcpaudit / loopcheck / memsentry / ragsentry / trainsentry
+      - name: Install internal scanners
         env:
           TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
         run: |
-          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/mcpaudit.git"
-          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/loopcheck.git"
-          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/memsentry.git"
-          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/ragsentry.git"
-          pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/trainsentry.git"
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry; do
+            python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
+          done
 
-      # --- Clean toy agent: every gate must pass for real. ---
-      - name: mcpaudit — clean agent (must pass)
-        run: mcpaudit scan --fail-on high -- python toy_agent/clean/mcp_server.py
-
-      - name: loopcheck — clean agent (must pass)
-        run: loopcheck analyze toy_agent/clean/trace.json --fail-on medium
-
-      - name: memsentry — clean agent (must pass)
-        run: memsentry toy_agent/clean/memory.md --fail-on high
-
-      - name: ragsentry — clean agent (must pass)
-        run: ragsentry toy_agent/clean/rag_doc.md --fail-on high
-
-      - name: trainsentry — clean agent (must pass)
-        run: trainsentry toy_agent/clean/training_data.jsonl --fail-on high
-
-      - name: memsentry — clean agent, goal_hijacking fixture (must pass)
-        run: memsentry toy_agent/clean/goal_hijack_memory.md --fail-on high
-
-      - name: ragsentry — clean agent, fake_remediation fixture (must pass)
-        run: ragsentry toy_agent/clean/fake_remediation_doc.md --fail-on high
-
-      - name: trainsentry — clean agent, goal_hijacking fixture (must pass)
-        run: trainsentry toy_agent/clean/goal_hijack_training.jsonl --fail-on high
-
-      # --- Vulnerable toy agent: each scan is EXPECTED to fail. We assert
-      # the nonzero exit ourselves, so a red flag here would mean the gate
-      # stopped catching a known-bad fixture, not that CI is broken. ---
-      - name: mcpaudit — vulnerable agent (must be BLOCKED)
+      - name: Verify scanner CLIs
         run: |
-          if mcpaudit scan --fail-on high -- python toy_agent/vulnerable/mcp_server.py; then
-            echo "::error::mcpaudit did not flag the poisoned tool description — gate regression!"
-            exit 1
-          fi
-          echo "mcpaudit correctly blocked the poisoned tool description."
+          set -euo pipefail
+          command -v mcpaudit
+          command -v loopcheck
+          command -v memsentry
+          command -v ragsentry
+          command -v trainsentry
 
-      - name: loopcheck — vulnerable agent (must be BLOCKED)
+      - name: Clean fixtures must pass
         run: |
-          if loopcheck analyze toy_agent/vulnerable/trace.json --fail-on medium; then
-            echo "::error::loopcheck did not flag the thrashing loop — gate regression!"
-            exit 1
-          fi
-          echo "loopcheck correctly blocked the wasteful trace."
+          set -euo pipefail
+          mcpaudit scan --fail-on high -- python toy_agent/clean/mcp_server.py
+          loopcheck analyze toy_agent/clean/trace.json --fail-on medium
+          memsentry toy_agent/clean/memory.md --fail-on high
+          ragsentry toy_agent/clean/rag_doc.md --fail-on high
+          trainsentry toy_agent/clean/training_data.jsonl --fail-on high
+          memsentry toy_agent/clean/goal_hijack_memory.md --fail-on high
+          ragsentry toy_agent/clean/fake_remediation_doc.md --fail-on high
+          trainsentry toy_agent/clean/goal_hijack_training.jsonl --fail-on high
 
-      - name: memsentry — vulnerable agent (must be BLOCKED)
+      - name: Vulnerable fixtures must be blocked
+        shell: bash
         run: |
-          if memsentry toy_agent/vulnerable/memory.md --fail-on high; then
-            echo "::error::memsentry did not flag the poisoned memory file — gate regression!"
-            exit 1
-          fi
-          echo "memsentry correctly blocked the poisoned memory file."
+          set -euo pipefail
 
-      - name: ragsentry — vulnerable agent (must be BLOCKED)
-        run: |
-          if ragsentry toy_agent/vulnerable/rag_doc.md --fail-on high; then
-            echo "::error::ragsentry did not flag the poisoned RAG document — gate regression!"
-            exit 1
-          fi
-          echo "ragsentry correctly blocked the poisoned RAG document."
+          expect_blocked() {
+            local label="$1"
+            shift
+            if "$@"; then
+              echo "::error::$label did not block the known-bad fixture"
+              exit 1
+            fi
+            echo "$label correctly blocked the known-bad fixture"
+          }
 
-      - name: trainsentry — vulnerable agent (must be BLOCKED)
-        run: |
-          if trainsentry toy_agent/vulnerable/training_data.jsonl --fail-on high; then
-            echo "::error::trainsentry did not flag the poisoned training example — gate regression!"
-            exit 1
-          fi
-          echo "trainsentry correctly blocked the poisoned training example."
+          expect_blocked "mcpaudit" mcpaudit scan --fail-on high -- python toy_agent/vulnerable/mcp_server.py
+          expect_blocked "loopcheck" loopcheck analyze toy_agent/vulnerable/trace.json --fail-on medium
+          expect_blocked "memsentry" memsentry toy_agent/vulnerable/memory.md --fail-on high
+          expect_blocked "ragsentry" ragsentry toy_agent/vulnerable/rag_doc.md --fail-on high
+          expect_blocked "trainsentry" trainsentry toy_agent/vulnerable/training_data.jsonl --fail-on high
+          expect_blocked "memsentry goal_hijacking" memsentry toy_agent/vulnerable/goal_hijack_memory.md --fail-on high
+          expect_blocked "ragsentry fake_remediation" ragsentry toy_agent/vulnerable/fake_remediation_doc.md --fail-on high
+          expect_blocked "trainsentry goal_hijacking" trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high
 
-      # --- New detection-capability upgrades (memsentry v1.1.0 / ragsentry
-      # v1.1.0 / trainsentry v1.1.0), each exercised against a fixture that
-      # ONLY the new check catches -- not the older instruction_injection
-      # patterns -- so a future regression in the new check specifically
-      # turns this gate red, not just the older ones. ---
-      - name: memsentry — vulnerable agent, goal_hijacking fixture (must be BLOCKED)
-        run: |
-          if memsentry toy_agent/vulnerable/goal_hijack_memory.md --fail-on high; then
-            echo "::error::memsentry's goal_hijacking check did not flag the redirected-goal memory line — gate regression!"
-            exit 1
-          fi
-          echo "memsentry correctly blocked the goal-hijacking memory line."
-
-      - name: ragsentry — vulnerable agent, fake_remediation fixture (must be BLOCKED)
-        run: |
-          if ragsentry toy_agent/vulnerable/fake_remediation_doc.md --fail-on high; then
-            echo "::error::ragsentry's fake_remediation check did not flag the Agentjacking-style document — gate regression!"
-            exit 1
-          fi
-          echo "ragsentry correctly blocked the fake-remediation document."
-
-      - name: trainsentry — vulnerable agent, goal_hijacking fixture (must be BLOCKED)
-        run: |
-          if trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high; then
-            echo "::error::trainsentry's goal_hijacking check did not flag the redirected-goal training example — gate regression!"
-            exit 1
-          fi
-          echo "trainsentry correctly blocked the goal-hijacking training example."
-
-      # --- Adversarial-tooling regression check. adversagen is the
-      # red-team counterpart to the five scanners above: it wires
-      # RealScannerDefender straight into mcpaudit/memsentry/ragsentry's
-      # actual CLIs (see its README). Running its own test suite here
-      # means that if a future change to any of those three scanners
-      # breaks how adversagen calls them -- a CLI flag rename, an exit
-      # code change, an output-format change -- THIS job goes red, not
-      # just adversagen's own separate CI. That's a real cross-repo
-      # regression this gate is positioned to catch that no single
-      # repo's own tests can.
-      - name: Clone and test adversagen (adversarial-tooling regression check)
+      - name: Cross-repository adversagen regression
         env:
           TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
         run: |
-          set +e
+          set -euo pipefail
           git clone "https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/adversagen.git" /tmp/adversagen
           cd /tmp/adversagen
-          pip install -r requirements.txt pytest 2>&1 | tee /tmp/pip_out.txt
-          python3 -m pytest tests/ -q --tb=short 2>&1 | tee /tmp/pytest_out.txt
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            echo "::error::adversagen test suite failed (exit $status). Tail of output:"
-            tail -c 3000 /tmp/pytest_out.txt | while IFS= read -r line; do echo "::error::$line"; done
-            exit 1
-          fi
+          python -m pip install -r requirements.txt pytest
+          python -m pytest tests/ -q --tb=short
