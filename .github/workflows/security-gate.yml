@@ -20,7 +20,7 @@ jobs:
       PYTHONUNBUFFERED: "1"
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -29,19 +29,24 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install internal scanners
-        env:
-          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
+      - name: Set up scanner dependencies
         run: |
-          set -euo pipefail
-          if [ -z "${TOOLS_PAT:-}" ]; then
-            echo "::error::TOOLS_PAT secret is required for private scanner installation"
-            exit 1
-          fi
           python -m pip install --upgrade pip
-          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry; do
-            python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
-          done
+
+      - name: Install mcpaudit
+        uses: Pyhroff/mcpaudit/.github/actions/install-package@08e979855b0f4801611ccc514a64bda034c028c8
+
+      - name: Install loopcheck
+        uses: Pyhroff/loopcheck/.github/actions/install-package@b677711ed98c1f2f016a686ceb826762d19184b9
+
+      - name: Install memsentry
+        uses: Pyhroff/memsentry/.github/actions/install-package@7b885673a1cd32d55a53648bfae59c2d912725e6
+
+      - name: Install ragsentry
+        uses: Pyhroff/ragsentry/.github/actions/install-package@f351af98d7f7e6c90e53ff8f10bbeb0eb9e47c9c
+
+      - name: Install trainsentry
+        uses: Pyhroff/trainsentry/.github/actions/install-package@ca9626d9f4ce7243f0a7ba496ab42db71efa1f5e
 
       - name: Verify scanner CLIs
         run: |
@@ -68,7 +73,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           expect_blocked() {
             local label="$1"
             shift
@@ -78,7 +82,6 @@ jobs:
             fi
             echo "$label correctly blocked the known-bad fixture"
           }
-
           expect_blocked "mcpaudit" mcpaudit scan --fail-on high -- python toy_agent/vulnerable/mcp_server.py
           expect_blocked "loopcheck" loopcheck analyze toy_agent/vulnerable/trace.json --fail-on medium
           expect_blocked "memsentry" memsentry toy_agent/vulnerable/memory.md --fail-on high
@@ -89,11 +92,4 @@ jobs:
           expect_blocked "trainsentry goal_hijacking" trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high
 
       - name: Cross-repository adversagen regression
-        env:
-          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
-        run: |
-          set -euo pipefail
-          git clone "https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/adversagen.git" /tmp/adversagen
-          cd /tmp/adversagen
-          python -m pip install -r requirements.txt pytest
-          python -m pytest tests/ -q --tb=short
+        uses: Pyhroff/adversagen/.github/actions/run-tests@5f32fcdf6c7129f0afc3b9eafad616fd0968873e
