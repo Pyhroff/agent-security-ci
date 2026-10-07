@@ -19,7 +19,7 @@ A scanner's unit tests prove its own rules execute correctly.
 
 > **Do the scanners still work together after one of them changes?**
 
-The harness exercises clean, vulnerable, and adversarial fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite).
+The harness exercises clean, vulnerable, and adversarial fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite). The checked-in regression corpus is release-gating; the adversarial challenge corpus is deliberately non-gating so weaknesses are surfaced rather than hidden behind a green build.
 
 ## Covered systems
 
@@ -76,3 +76,13 @@ python -m pytest -q
 ## License
 
 MIT
+
+
+## Adversarial challenge layer
+
+Every gate run also executes a 10-case challenge corpus containing:
+
+- rephrased variants of known attack patterns, testing robustness beyond canonical wording;
+- benign security-context controls containing attack terminology as documentation, testing false-positive resistance.
+
+Challenge metrics are published to the workflow summary and `benchmark/challenge.json`, but **do not fail the release gate**. A challenge miss is a signal to expand scanner tests or improve detection logic, not evidence that the scanner is production-ready.
