@@ -71,3 +71,8 @@ The first challenge run used 10 hand-authored cases (five rephrased malicious va
 - **trainsentry:** the benign control passed, but the rephrased poisoning variant evaded detection.
 
 These are hypotheses for scanner hardening, not claims about general-world performance. The corpus is intentionally small and should grow into a held-out suite with multiple independent variants per threat class.
+
+
+## Post-hardening rerun
+
+The scanner hardening changes identified by the first challenge run have now landed in `mcpaudit`, `memsentry`, `ragsentry`, `trainsentry`, and `loopcheck`. The next gate run executes this same challenge corpus against those updated default branches; the original 0.20/0.20 result above is retained as the baseline for comparison.
