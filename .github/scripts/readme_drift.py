@@ -16,7 +16,7 @@ README_NAMES = {"README", "README.md", "README.rst", "README.txt"}
 
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+['\"][^'\"]*['\"])?\)")
 COMMAND_RE = re.compile(
-    r"(?m)^\s*(?:\$\s*)?(?:python3?|bash|sh|zsh|ruby|node)\s+([A-Za-z0-9_./-]+)"
+    r"(?m)^\s*(?:\$\s*)?(?:python3?|bash|sh|zsh|ruby|node)\s+(?!--m\s)(?!-m\s)([A-Za-z0-9_./-]+)"
 )
 DIRECT_RE = re.compile(r"(?m)^\s*(?:\$\s*)?(\./[A-Za-z0-9_./-]+)")
 BADGE_RE = re.compile(r"actions/workflows/([^/]+)/badge\.svg")
