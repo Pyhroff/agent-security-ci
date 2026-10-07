@@ -52,6 +52,56 @@ jobs:
           command -v ragsentry
           command -v trainsentry
 
+      - name: Run controlled regression benchmark
+        run: |
+          python scripts/regression.py | tee benchmark/run.log
+
+      - name: Run adversarial challenge corpus
+        run: |
+          python scripts/challenge.py | tee benchmark/challenge.log
+
+      - name: Publish benchmark summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path("benchmark/latest.json")
+          if not p.exists():
+              raise SystemExit(0)
+          r=json.loads(p.read_text())
+          m=r["metrics"]; c=r["confusion_matrix"]
+          challenge=Path("benchmark/challenge.json")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
+              f.write("## Controlled security regression\n\n")
+              f.write(f"- Precision: **{m['precision']:.3f}**\n")
+              f.write(f"- Recall: **{m['recall']:.3f}**\n")
+              f.write(f"- F1: **{m['f1']:.3f}**\n")
+              f.write(f"- False-positive rate: **{m['false_positive_rate']:.3f}**\n")
+              f.write(f"- Confusion matrix: TP={c['tp']}, FP={c['fp']}, TN={c['tn']}, FN={c['fn']}\n")
+              f.write("\n| Scanner | Cases | Precision | Recall | F1 | FPR | Contract |\n|---|---:|---:|---:|---:|---:|---|\n")
+              for scanner, s in r.get("by_scanner", {}).items():
+                  f.write(f"| {scanner} | {s['cases']} | {s['precision']:.3f} | {s['recall']:.3f} | {s['f1']:.3f} | {s['false_positive_rate']:.3f} | {'PASS' if s['contract_pass'] else 'FAIL'} |\n")
+              f.write("\n> Corpus metrics describe only checked-in regression fixtures; they are not production detection claims.\n")
+              if challenge.exists():
+                  cr=json.loads(challenge.read_text())
+                  cm=cr["metrics"]; cc=cr["confusion_matrix"]
+                  f.write("\n## Adversarial challenge (non-gating)\n\n")
+                  f.write(f"- Precision: **{cm['precision']:.3f}**\n- Recall: **{cm['recall']:.3f}**\n- F1: **{cm['f1']:.3f}**\n- False-positive rate: **{cm['false_positive_rate']:.3f}**\n- Confusion matrix: TP={cc['tp']}, FP={cc['fp']}, TN={cc['tn']}, FN={cc['fn']}\n")
+                  f.write("\n> Challenge mismatches are intentionally non-gating and are evidence for follow-up hardening, not release criteria.\n")
+          PY
+
+      - name: Upload benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.2
+        with:
+          name: security-regression-results
+          path: |
+            benchmark/latest.json
+            benchmark/challenge.json
+          if-no-files-found: ignore
+          
+
       - name: Clean fixtures must pass
         run: |
           set -euo pipefail
