@@ -48,3 +48,26 @@ Confusion matrix: **TP=8, FP=0, TN=8, FN=0**.
 The challenge layer is **non-gating**. This is intentional: a miss should become visible as evidence for scanner hardening rather than being converted into an arbitrary release failure. Results are written to `benchmark/challenge.json` and summarized in GitHub Actions.
 
 Interpret challenge metrics as exploratory regression evidence, not a representative evaluation set. The corpus is small, hand-authored, and designed to probe known failure modes.
+
+## Measured challenge result
+
+The first challenge run used 10 hand-authored cases (five rephrased malicious variants and five benign security-context controls). The real scanner CLIs produced **TP=1, FP=4, TN=1, FN=4**, yielding **precision=0.200, recall=0.200, F1=0.200, FPR=0.800**.
+
+| Scanner | TP | FP | TN | FN | Precision | Recall | F1 | FPR |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| mcpaudit | 0 | 1 | 0 | 1 | 0.000 | 0.000 | 0.000 | 1.000 |
+| loopcheck | 1 | 1 | 0 | 0 | 0.500 | 1.000 | 0.667 | 1.000 |
+| memsentry | 0 | 1 | 0 | 1 | 0.000 | 0.000 | 0.000 | 1.000 |
+| ragsentry | 0 | 1 | 0 | 1 | 0.000 | 0.000 | 0.000 | 1.000 |
+| trainsentry | 0 | 0 | 1 | 1 | 1.000 | 0.000 | 0.000 | 0.000 |
+| **Overall** | **1** | **4** | **1** | **4** | **0.200** | **0.200** | **0.200** | **0.800** |
+
+### What this exposed
+
+- **mcpaudit:** a semantically equivalent poisoned tool description evaded the current pattern match, while a benign security description containing words such as “override” triggered a finding.
+- **loopcheck:** the rephrased repeated-call attack was detected, but a benign two-call verification flow was treated as wasteful. The current rule needs stronger progress/context semantics before a repeated call is considered a defect.
+- **memsentry:** rephrased memory injection evaded detection, while explanatory security text containing an injection phrase was treated as an instruction.
+- **ragsentry:** the same semantic-vs-literal limitation appeared in retrieved-document detection.
+- **trainsentry:** the benign control passed, but the rephrased poisoning variant evaded detection.
+
+These are hypotheses for scanner hardening, not claims about general-world performance. The corpus is intentionally small and should grow into a held-out suite with multiple independent variants per threat class.
