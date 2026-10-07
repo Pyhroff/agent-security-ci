@@ -74,6 +74,9 @@ jobs:
               f.write(f"- F1: **{m['f1']:.3f}**\n")
               f.write(f"- False-positive rate: **{m['false_positive_rate']:.3f}**\n")
               f.write(f"- Confusion matrix: TP={c['tp']}, FP={c['fp']}, TN={c['tn']}, FN={c['fn']}\n")
+              f.write("\n| Scanner | Cases | Precision | Recall | F1 | FPR | Contract |\n|---|---:|---:|---:|---:|---:|---|\n")
+              for scanner, s in r.get("by_scanner", {}).items():
+                  f.write(f"| {scanner} | {s['cases']} | {s['precision']:.3f} | {s['recall']:.3f} | {s['f1']:.3f} | {s['false_positive_rate']:.3f} | {'PASS' if s['contract_pass'] else 'FAIL'} |\n")
               f.write("\n> Corpus metrics describe only checked-in regression fixtures; they are not production detection claims.\n")
           PY
 
