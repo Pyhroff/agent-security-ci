@@ -47,6 +47,20 @@ Hardened workflows use least-privilege permissions, bounded execution, stale-run
 
 Private cross-repository actions require repository-level Actions access to be configured explicitly. The gate does not use personal access tokens or silently bypass inaccessible dependencies.
 
+## Measured regression snapshot
+
+The latest GitHub Actions benchmark executes 16 checked-in cases (8 clean/vulnerable pairs) through the real scanner CLIs.
+
+| Metric | Result |
+|---|---:|
+| Precision | 1.000 |
+| Recall | 1.000 |
+| F1 | 1.000 |
+| False-positive rate | 0.000 |
+| TP / FP / TN / FN | 8 / 0 / 8 / 0 |
+
+These figures are **fixture-regression metrics only**. They are not production detection claims; the corpus is intentionally small and paired. See `benchmark/README.md` for the methodology and measured per-scanner breakdown.
+
 ## Relationship to aisec-suite
 
 **aisec-suite** = product-facing umbrella and common CLI.
