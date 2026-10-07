@@ -86,3 +86,18 @@ Every gate run also executes a 10-case challenge corpus containing:
 - benign security-context controls containing attack terminology as documentation, testing false-positive resistance.
 
 Challenge metrics are published to the workflow summary and `benchmark/challenge.json`, but **do not fail the release gate**. A challenge miss is a signal to expand scanner tests or improve detection logic, not evidence that the scanner is production-ready.
+
+## Latest adversarial challenge result
+
+Run 37658926358 (commit 3affd73) executed 10 challenge cases: one malicious variant and one benign security-context control per scanner.
+
+| Scanner | Precision | Recall | F1 | FPR | Main signal |
+|---|---:|---:|---:|---:|---|
+| mcpaudit | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased poisoning; flagged benign security wording |
+| loopcheck | 0.500 | 1.000 | 0.667 | 1.000 | caught loop variant; flagged benign repeated verification |
+| memsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
+| ragsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
+| trainsentry | 1.000 | 0.000 | 0.000 | 0.000 | no false positive, but missed rephrased poisoning |
+| **Overall** | **0.200** | **0.200** | **0.200** | **0.800** | **4 FN / 4 FP / 1 TP / 1 TN** |
+
+This challenge result is intentionally **non-gating**. It demonstrates that the 16-case regression corpus is a compatibility contract, not a realistic detector evaluation. Immediate hardening targets are semantic/context-aware matching for injection detectors and more precise loop repetition criteria.
