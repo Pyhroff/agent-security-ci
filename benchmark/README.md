@@ -81,3 +81,22 @@ The scanner hardening changes identified by the first challenge run have now lan
 ## Final gap fix rerun
 
 `ragsentry` received one additional targeted fix for the remaining “disregard previous guidance” variant. The next umbrella run will validate the complete challenge corpus against that revision.
+
+## Final measured challenge result
+
+After the scanner hardening changes landed, run 37660386589 executed the same 10-case challenge corpus against the updated default branches.
+
+| Metric | Baseline | Final |
+|---|---:|---:|
+| TP | 1 | 5 |
+| FP | 4 | 0 |
+| TN | 1 | 5 |
+| FN | 4 | 0 |
+| Precision | 0.200 | 1.000 |
+| Recall | 0.200 | 1.000 |
+| F1 | 0.200 | 1.000 |
+| False-positive rate | 0.800 | 0.000 |
+
+All five scanners now pass both challenge cases: the rephrased malicious variant is blocked and the benign security-context control is allowed.
+
+This is still a small, hand-authored challenge set. The result is evidence of improvement against these explicit failure modes, not a production-world accuracy estimate.
