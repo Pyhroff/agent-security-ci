@@ -4,7 +4,7 @@
 
 **Cross-repository regression infrastructure for the Pyhroff AI-security portfolio.**
 
-[![CI](https://github.com/Pyhroff/agent-security-ci/actions/workflows/ci.yml/badge.svg)](https://github.com/Pyhroff/agent-security-ci/actions/workflows/ci.yml)
+[![CI](https://github.com/Pyhroff/agent-security-ci/actions/workflows/security-gate.yml/badge.svg)](https://github.com/Pyhroff/agent-security-ci/actions/workflows/security-gate.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
@@ -45,7 +45,7 @@ The harness exercises clean, vulnerable, and adversarial fixtures across the por
 
 Hardened workflows use least-privilege permissions, bounded execution, stale-run cancellation, explicit failure states, and immutable action references where enabled.
 
-Private cross-repository jobs require an appropriate read-only repository credential. Missing credentials are treated as infrastructure/configuration failures, never as a reason to bypass a security gate.
+Private cross-repository actions require repository-level Actions access to be configured explicitly. The gate does not use personal access tokens or silently bypass inaccessible dependencies.
 
 ## Relationship to aisec-suite
 
