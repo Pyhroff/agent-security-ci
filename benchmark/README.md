@@ -76,3 +76,8 @@ These are hypotheses for scanner hardening, not claims about general-world perfo
 ## Post-hardening rerun
 
 The scanner hardening changes identified by the first challenge run have now landed in `mcpaudit`, `memsentry`, `ragsentry`, `trainsentry`, and `loopcheck`. The next gate run executes this same challenge corpus against those updated default branches; the original 0.20/0.20 result above is retained as the baseline for comparison.
+
+
+## Final gap fix rerun
+
+`ragsentry` received one additional targeted fix for the remaining “disregard previous guidance” variant. The next umbrella run will validate the complete challenge corpus against that revision.
