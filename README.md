@@ -19,7 +19,7 @@ A scanner's unit tests prove its own rules execute correctly.
 
 > **Do the scanners still work together after one of them changes?**
 
-The harness exercises clean, vulnerable, and adversarial fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite).
+The harness exercises clean, vulnerable, and adversarial fixtures across the portfolio and acts as the integration/regression layer around [aisec-suite](https://github.com/Pyhroff/aisec-suite). The checked-in regression corpus is release-gating; the adversarial challenge corpus is deliberately non-gating so weaknesses are surfaced rather than hidden behind a green build.
 
 ## Covered systems
 
@@ -47,6 +47,20 @@ Hardened workflows use least-privilege permissions, bounded execution, stale-run
 
 Private cross-repository actions require repository-level Actions access to be configured explicitly. The gate does not use personal access tokens or silently bypass inaccessible dependencies.
 
+## Measured regression snapshot
+
+The latest GitHub Actions benchmark executes 16 checked-in cases (8 clean/vulnerable pairs) through the real scanner CLIs.
+
+| Metric | Result |
+|---|---:|
+| Precision | 1.000 |
+| Recall | 1.000 |
+| F1 | 1.000 |
+| False-positive rate | 0.000 |
+| TP / FP / TN / FN | 8 / 0 / 8 / 0 |
+
+These figures are **fixture-regression metrics only**. They are not production detection claims; the corpus is intentionally small and paired. See `benchmark/README.md` for the methodology and measured per-scanner breakdown.
+
 ## Relationship to aisec-suite
 
 **aisec-suite** = product-facing umbrella and common CLI.
@@ -62,3 +76,34 @@ python -m pytest -q
 ## License
 
 MIT
+
+
+## Adversarial challenge layer
+
+Every gate run also executes a 10-case challenge corpus containing:
+
+- rephrased variants of known attack patterns, testing robustness beyond canonical wording;
+- benign security-context controls containing attack terminology as documentation, testing false-positive resistance.
+
+Challenge metrics are published to the workflow summary and `benchmark/challenge.json`, but **do not fail the release gate**. A challenge miss is a signal to expand scanner tests or improve detection logic, not evidence that the scanner is production-ready.
+
+## Latest adversarial challenge result
+
+Run 37658926358 (commit 3affd73) executed 10 challenge cases: one malicious variant and one benign security-context control per scanner.
+
+| Scanner | Precision | Recall | F1 | FPR | Main signal |
+|---|---:|---:|---:|---:|---|
+| mcpaudit | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased poisoning; flagged benign security wording |
+| loopcheck | 0.500 | 1.000 | 0.667 | 1.000 | caught loop variant; flagged benign repeated verification |
+| memsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
+| ragsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
+| trainsentry | 1.000 | 0.000 | 0.000 | 0.000 | no false positive, but missed rephrased poisoning |
+| **Overall** | **0.200** | **0.200** | **0.200** | **0.800** | **4 FN / 4 FP / 1 TP / 1 TN** |
+
+This challenge result is intentionally **non-gating**. It demonstrates that the 16-case regression corpus is a compatibility contract, not a realistic detector evaluation. Immediate hardening targets are semantic/context-aware matching for injection detectors and more precise loop repetition criteria.
+
+## Final challenge result
+
+After hardening all five scanners against the observed failure modes, the same 10-case adversarial challenge improved from **precision 0.200 / recall 0.200 / F1 0.200 / FPR 0.800** to **precision 1.000 / recall 1.000 / F1 1.000 / FPR 0.000** (TP=5, FP=0, TN=5, FN=0).
+
+The improvement is specific to this small hand-authored challenge corpus. It is evidence that the identified regression cases were addressed, not a claim of production-world detector accuracy.
