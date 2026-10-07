@@ -101,3 +101,9 @@ Run 37658926358 (commit 3affd73) executed 10 challenge cases: one malicious vari
 | **Overall** | **0.200** | **0.200** | **0.200** | **0.800** | **4 FN / 4 FP / 1 TP / 1 TN** |
 
 This challenge result is intentionally **non-gating**. It demonstrates that the 16-case regression corpus is a compatibility contract, not a realistic detector evaluation. Immediate hardening targets are semantic/context-aware matching for injection detectors and more precise loop repetition criteria.
+
+## Final challenge result
+
+After hardening all five scanners against the observed failure modes, the same 10-case adversarial challenge improved from **precision 0.200 / recall 0.200 / F1 0.200 / FPR 0.800** to **precision 1.000 / recall 1.000 / F1 1.000 / FPR 0.000** (TP=5, FP=0, TN=5, FN=0).
+
+The improvement is specific to this small hand-authored challenge corpus. It is evidence that the identified regression cases were addressed, not a claim of production-world detector accuracy.
