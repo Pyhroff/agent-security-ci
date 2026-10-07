@@ -39,3 +39,12 @@ The GitHub Actions run for commit `29d6f7a` executed all 16 checked-in cases (8 
 Confusion matrix: **TP=8, FP=0, TN=8, FN=0**.
 
 **Interpretation:** this is a regression-contract result over a small, deliberately paired fixture corpus. It demonstrates that the current scanner behavior satisfies these checked-in expectations; it does **not** establish production-world precision, recall, coverage, or exploitability. The next benchmark expansion should add held-out and adversarially varied cases before making broader claims.
+
+
+## Adversarial challenge corpus
+
+`challenge.py` runs ten held-out-style cases: five semantically malicious variants and five benign security-context controls. The malicious variants preserve the underlying threat while changing wording or structure; the benign controls deliberately contain security terminology without making it an instruction to the agent.
+
+The challenge layer is **non-gating**. This is intentional: a miss should become visible as evidence for scanner hardening rather than being converted into an arbitrary release failure. Results are written to `benchmark/challenge.json` and summarized in GitHub Actions.
+
+Interpret challenge metrics as exploratory regression evidence, not a representative evaluation set. The corpus is small, hand-authored, and designed to probe known failure modes.
