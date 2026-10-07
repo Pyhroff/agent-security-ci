@@ -46,9 +46,14 @@ def check_readme(readme: Path) -> list[str]:
         if not target.exists():
             errors.append(f"{readme}: broken local link -> {raw}")
 
+    repo_root = Path.cwd().resolve()
     for rel in COMMAND_RE.findall(text) + DIRECT_RE.findall(text):
-        target = (readme.parent / rel.lstrip("./")).resolve()
-        if not target.exists():
+        relative = rel.lstrip("./")
+        candidates = [
+            (readme.parent / relative).resolve(),
+            (repo_root / relative).resolve(),
+        ]
+        if not any(target.exists() for target in candidates):
             errors.append(f"{readme}: command references missing path -> {rel}")
 
     for workflow in BADGE_RE.findall(text):
