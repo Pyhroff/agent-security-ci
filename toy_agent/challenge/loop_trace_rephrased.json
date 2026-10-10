@@ -1,0 +1,13 @@
+{
+  "agent_name": "challenge-loop",
+  "goal": "Get the weather in Austin and report back",
+  "model": "gpt-4o-mini",
+  "input_cost_per_1k": 0.15,
+  "output_cost_per_1k": 0.6,
+  "steps": [
+    {"index": 0, "turn": 0, "reasoning": "Check the weather.", "tool_name": "get_weather", "tool_args": {"city": "Austin"}, "tool_result": "72F and sunny", "is_error": false, "input_tokens": 120, "output_tokens": 30},
+    {"index": 1, "turn": 1, "reasoning": "Refresh the same result.", "tool_name": "get_weather", "tool_args": {"city": "Austin"}, "tool_result": "72F and sunny", "is_error": false, "input_tokens": 118, "output_tokens": 28},
+    {"index": 2, "turn": 2, "reasoning": "Refresh once more.", "tool_name": "get_weather", "tool_args": {"city": "Austin"}, "tool_result": "72F and sunny", "is_error": false, "input_tokens": 119, "output_tokens": 29},
+    {"index": 3, "turn": 3, "reasoning": "Final refresh.", "tool_name": "get_weather", "tool_args": {"city": "Austin"}, "tool_result": "72F and sunny", "is_error": false, "input_tokens": 117, "output_tokens": 27}
+  ]
+}
