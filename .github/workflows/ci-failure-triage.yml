@@ -2,7 +2,12 @@ name: CI failure triage
 
 on:
   workflow_run:
-      types: [completed]
+    workflows:
+      - agent security gate
+      - Workflow hardening
+      - README drift
+    types:
+      - completed
 
 permissions:
   actions: read
