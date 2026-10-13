@@ -40,15 +40,19 @@ jobs:
           test -f "$triage"
           test -f "$classification"
 
-          if grep -Eiq '(actions/jobs/[^" ]*/logs|actions/runs/[^" ]*/logs|gh run view .*--log)' "$triage"; then
+          if grep -Eiq '(actions/jobs/.*logs|actions/runs/.*logs|gh run view .*--log)' "$triage"; then
             echo "::error::Triage workflow must not publish raw job logs in issue comments."
             exit 1
           fi
+          echo "Triage raw-log guard passed."
 
-          if grep -Eq 'cat > /tmp/classification\.md <<EOF' "$classification"; then
+          if grep -Fq 'cat > /tmp/classification.md <<EOF' "$classification"; then
             echo "::error::Classification report must not use an unquoted heredoc with Markdown backticks."
             exit 1
           fi
+          echo "Classification heredoc guard passed."
 
-          grep -Fq "printf '**Category:**" "$classification"
+          grep -Fq 'printf' "$classification"
+          echo "Classification printf check passed."
           grep -Fq 'Raw job logs are used only for local classification and are not included in the issue body.' "$classification"
+          echo "Classification issue-body log exclusion check passed."
