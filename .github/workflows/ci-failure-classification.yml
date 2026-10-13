@@ -67,20 +67,18 @@ $log"
             remediation="Human security review required; do not auto-fix or bypass the gate."
           fi
 
-          cat > /tmp/classification.md <<EOF
-          ## Automated CI failure classification
-
-          **Workflow:** $WORKFLOW
-          **Run:** $RUN_URL
-          **Category:** `$category`
-          **Confidence:** `$confidence`
-
-          ### Recommended remediation
-          $remediation
-
-          ### Safety boundary
-          This classifier is advisory. It does not modify source code, suppress checks, or bypass security gates.
-          EOF
+          {
+            printf '%s\n' '## Automated CI failure classification' ''
+            printf '**Workflow:** %s\n' "$WORKFLOW"
+            printf '**Run:** %s\n' "$RUN_URL"
+            printf '**Category:** `%s`\n' "$category"
+            printf '**Confidence:** `%s`\n' "$confidence"
+            printf '\n%s\n' '### Recommended remediation'
+            printf '%s\n' "$remediation"
+            printf '\n%s\n' '### Safety boundary'
+            printf '%s\n' 'This classifier is advisory. It does not modify source code, suppress checks, or bypass security gates.'
+            printf '%s\n' 'Raw job logs are used only for local classification and are not included in the issue body.'
+          } > /tmp/classification.md
 
       - name: Create classification issue
         env:
@@ -89,4 +87,6 @@ $log"
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          gh issue create --repo "$REPO"             --title "CI classification: run $RUN_ID"             --body-file /tmp/classification.md
+          gh issue create --repo "$REPO" \
+            --title "CI classification: run $RUN_ID" \
+            --body-file /tmp/classification.md
