@@ -26,3 +26,29 @@ jobs:
             fi
           done < <(grep -hE '^[[:space:]-]*uses:[[:space:]]+' .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null || true)
           exit "$violations"
+
+  diagnostic-output-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Prevent raw CI logs from entering issue comments
+        shell: bash
+        run: |
+          set -euo pipefail
+          triage=".github/workflows/ci-failure-triage.yml"
+          classification=".github/workflows/ci-failure-classification.yml"
+          test -f "$triage"
+          test -f "$classification"
+
+          if grep -Eq 'repos/\$REPO/actions/jobs/\$job_id/logs' "$triage"; then
+            echo "::error::Triage workflow must not publish raw job logs in issue comments."
+            exit 1
+          fi
+
+          if grep -Eq 'cat > /tmp/classification\.md <<EOF' "$classification"; then
+            echo "::error::Classification report must not use an unquoted heredoc with Markdown backticks."
+            exit 1
+          fi
+
+          grep -Fq "printf '**Category:** `%s`\\n' \"\$category\"" "$classification"
+          grep -Fq "Raw job logs are used only for local classification and are not included in the issue body." "$classification"
