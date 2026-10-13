@@ -40,7 +40,7 @@ jobs:
           test -f "$triage"
           test -f "$classification"
 
-          if grep -Eq 'repos/\$REPO/actions/jobs/\$job_id/logs' "$triage"; then
+          if grep -Eiq '(actions/jobs/[^" ]*/logs|actions/runs/[^" ]*/logs|gh run view .*--log)' "$triage"; then
             echo "::error::Triage workflow must not publish raw job logs in issue comments."
             exit 1
           fi
