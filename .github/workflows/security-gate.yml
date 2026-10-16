@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
           python -m pip install --upgrade pip
-          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry; do
+          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec; do
             python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
           done
 
@@ -51,6 +51,7 @@ jobs:
           command -v memsentry
           command -v ragsentry
           command -v trainsentry
+          command -v specprove
 
       - name: Run controlled regression benchmark
         run: |
@@ -113,6 +114,7 @@ jobs:
           memsentry toy_agent/clean/goal_hijack_memory.md --fail-on high
           ragsentry toy_agent/clean/fake_remediation_doc.md --fail-on high
           trainsentry toy_agent/clean/goal_hijack_training.jsonl --fail-on high
+          specprove scan-py toy_agent/clean/protocol_handlers.py --fail-on-findings
 
       - name: Vulnerable fixtures must be blocked
         shell: bash
@@ -137,6 +139,7 @@ jobs:
           expect_blocked "memsentry goal_hijacking" memsentry toy_agent/vulnerable/goal_hijack_memory.md --fail-on high
           expect_blocked "ragsentry fake_remediation" ragsentry toy_agent/vulnerable/fake_remediation_doc.md --fail-on high
           expect_blocked "trainsentry goal_hijacking" trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high
+          expect_blocked "specprove formal_protocols" specprove scan-py toy_agent/vulnerable/protocol_handlers.py --fail-on-findings
 
       - name: Cross-repository adversagen regression
         env:
