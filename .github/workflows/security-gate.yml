@@ -50,7 +50,7 @@ jobs:
         uses: Pyhroff/trainsentry/.github/actions/install-package@ca9626d9f4ce7243f0a7ba496ab42db71efa1f5e
 
       - name: Install specprove-sec
-        uses: Pyhroff/specprove-sec/.github/actions/install-package@51a102a6d00b74139286a2a53621bd0c25679eb
+        uses: Pyhroff/specprove-sec/.github/actions/install-package@51a102a6d00b74139286a2a536a21bd0c25679eb
 
       - name: Verify scanner CLIs
         run: |
