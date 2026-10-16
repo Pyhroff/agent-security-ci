@@ -29,19 +29,28 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install internal scanners
-        env:
-          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
+      - name: Set up scanner dependencies
         run: |
           set -euo pipefail
-          if [ -z "${TOOLS_PAT:-}" ]; then
-            echo "::error::TOOLS_PAT secret is required for private scanner installation"
-            exit 1
-          fi
           python -m pip install --upgrade pip
-          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec; do
-            python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
-          done
+
+      - name: Install mcpaudit
+        uses: Pyhroff/mcpaudit/.github/actions/install-package@08e979855b0f4801611ccc514a64bda034c028c8
+
+      - name: Install loopcheck
+        uses: Pyhroff/loopcheck/.github/actions/install-package@b677711ed98c1f2f016a686ceb826762d19184b9
+
+      - name: Install memsentry
+        uses: Pyhroff/memsentry/.github/actions/install-package@7b885673a1cd32d55a53648bfae59c2d912725e6
+
+      - name: Install ragsentry
+        uses: Pyhroff/ragsentry/.github/actions/install-package@f351af98d7f7e6c90e53ff8f10bbeb0eb9e47c9c
+
+      - name: Install trainsentry
+        uses: Pyhroff/trainsentry/.github/actions/install-package@ca9626d9f4ce7243f0a7ba496ab42db71efa1f5e
+
+      - name: Install specprove-sec
+        uses: Pyhroff/specprove-sec/.github/actions/install-package@51a102a6d00b74139286a2a536a21bd0c25679eb
 
       - name: Verify scanner CLIs
         run: |
@@ -55,10 +64,12 @@ jobs:
 
       - name: Run controlled regression benchmark
         run: |
+          set -euo pipefail
           python scripts/regression.py | tee benchmark/run.log
 
       - name: Run adversarial challenge corpus
         run: |
+          set -euo pipefail
           python scripts/challenge.py | tee benchmark/challenge.log
 
       - name: Publish benchmark summary
@@ -67,13 +78,14 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          p=Path("benchmark/latest.json")
+          p = Path("benchmark/latest.json")
           if not p.exists():
               raise SystemExit(0)
-          r=json.loads(p.read_text())
-          m=r["metrics"]; c=r["confusion_matrix"]
-          challenge=Path("benchmark/challenge.json")
-          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
+          r = json.loads(p.read_text())
+          m = r["metrics"]
+          c = r["confusion_matrix"]
+          challenge = Path("benchmark/challenge.json")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
               f.write("## Controlled security regression\n\n")
               f.write(f"- Precision: **{m['precision']:.3f}**\n")
               f.write(f"- Recall: **{m['recall']:.3f}**\n")
@@ -85,8 +97,9 @@ jobs:
                   f.write(f"| {scanner} | {s['cases']} | {s['precision']:.3f} | {s['recall']:.3f} | {s['f1']:.3f} | {s['false_positive_rate']:.3f} | {'PASS' if s['contract_pass'] else 'FAIL'} |\n")
               f.write("\n> Corpus metrics describe only checked-in regression fixtures; they are not production detection claims.\n")
               if challenge.exists():
-                  cr=json.loads(challenge.read_text())
-                  cm=cr["metrics"]; cc=cr["confusion_matrix"]
+                  cr = json.loads(challenge.read_text())
+                  cm = cr["metrics"]
+                  cc = cr["confusion_matrix"]
                   f.write("\n## Adversarial challenge (non-gating)\n\n")
                   f.write(f"- Precision: **{cm['precision']:.3f}**\n- Recall: **{cm['recall']:.3f}**\n- F1: **{cm['f1']:.3f}**\n- False-positive rate: **{cm['false_positive_rate']:.3f}**\n- Confusion matrix: TP={cc['tp']}, FP={cc['fp']}, TN={cc['tn']}, FN={cc['fn']}\n")
                   f.write("\n> Challenge mismatches are intentionally non-gating and are evidence for follow-up hardening, not release criteria.\n")
@@ -101,7 +114,6 @@ jobs:
             benchmark/latest.json
             benchmark/challenge.json
           if-no-files-found: ignore
-          
 
       - name: Clean fixtures must pass
         run: |
@@ -120,7 +132,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           expect_blocked() {
             local label="$1"
             shift
@@ -130,7 +141,6 @@ jobs:
             fi
             echo "$label correctly blocked the known-bad fixture"
           }
-
           expect_blocked "mcpaudit" mcpaudit scan --fail-on high -- python toy_agent/vulnerable/mcp_server.py
           expect_blocked "loopcheck" loopcheck analyze toy_agent/vulnerable/trace.json --fail-on medium
           expect_blocked "memsentry" memsentry toy_agent/vulnerable/memory.md --fail-on high
@@ -142,11 +152,4 @@ jobs:
           expect_blocked "specprove formal_protocols" specprove scan-py toy_agent/vulnerable/protocol_handlers.py --fail-on-findings
 
       - name: Cross-repository adversagen regression
-        env:
-          TOOLS_PAT: ${{ secrets.TOOLS_PAT }}
-        run: |
-          set -euo pipefail
-          git clone "https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/adversagen.git" /tmp/adversagen
-          cd /tmp/adversagen
-          python -m pip install -r requirements.txt pytest
-          python -m pytest tests/ -q --tb=short
+        uses: Pyhroff/adversagen/.github/actions/run-tests@5f32fcdf6c7129f0afc3b9eafad616fd0968873e
