@@ -29,6 +29,8 @@ CASES = [
     ("ragsentry", "vulnerable_fake_remediation", False, ["ragsentry", "toy_agent/vulnerable/fake_remediation_doc.md", "--fail-on", "high"]),
     ("trainsentry", "clean_goal_hijack_training", True, ["trainsentry", "toy_agent/clean/goal_hijack_training.jsonl", "--fail-on", "high"]),
     ("trainsentry", "vulnerable_goal_hijack_training", False, ["trainsentry", "toy_agent/vulnerable/goal_hijack_training.jsonl", "--fail-on", "high"]),
+    ("specprove", "clean_formal_protocols", True, ["specprove", "scan-py", "toy_agent/clean/protocol_handlers.py", "--fail-on-findings"]),
+    ("specprove", "vulnerable_formal_protocols", False, ["specprove", "scan-py", "toy_agent/vulnerable/protocol_handlers.py", "--fail-on-findings"]),
 ]
 
 
