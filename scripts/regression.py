@@ -37,6 +37,8 @@ CASES = [
     ("tokenspecter", "vulnerable_sse_stream", False, ["tokenspecter", "scan", "toy_agent/vulnerable/sse_trace.stream.json", "--fail-on-findings"]),
     ("circuitshield", "clean_residual_circuit", True, ["circuitshield", "scan", "toy_agent/clean/residual_trace.act.json", "--fail-on-findings"]),
     ("circuitshield", "vulnerable_residual_circuit", False, ["circuitshield", "scan", "toy_agent/vulnerable/residual_trace.act.json", "--fail-on-findings"]),
+    ("attestinfer", "clean_inference_proof", True, ["attestinfer", "scan", "toy_agent/clean/inference_receipt.proof.json", "--fail-on-findings"]),
+    ("attestinfer", "vulnerable_inference_proof", False, ["attestinfer", "scan", "toy_agent/vulnerable/inference_receipt.proof.json", "--fail-on-findings"]),
 ]
 
 

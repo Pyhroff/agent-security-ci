@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
           python -m pip install --upgrade pip
-          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec weightspecter tokenspecter circuitshield; do
+          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec weightspecter tokenspecter circuitshield attestinfer; do
             python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
           done
 
@@ -55,6 +55,7 @@ jobs:
           command -v weightspecter
           command -v tokenspecter
           command -v circuitshield
+          command -v attestinfer
 
       - name: Run controlled regression benchmark
         run: |
@@ -121,6 +122,7 @@ jobs:
           weightspecter scan toy_agent/clean/lora_adapter.safetensors --fail-on-findings
           tokenspecter scan toy_agent/clean/sse_trace.stream.json --fail-on-findings
           circuitshield scan toy_agent/clean/residual_trace.act.json --fail-on-findings
+          attestinfer scan toy_agent/clean/inference_receipt.proof.json --fail-on-findings
 
       - name: Vulnerable fixtures must be blocked
         shell: bash
@@ -149,6 +151,7 @@ jobs:
           expect_blocked "weightspecter lora_weights" weightspecter scan toy_agent/vulnerable/lora_adapter.safetensors --fail-on-findings
           expect_blocked "tokenspecter sse_sidechannel" tokenspecter scan toy_agent/vulnerable/sse_trace.stream.json --fail-on-findings
           expect_blocked "circuitshield refusal_ablation" circuitshield scan toy_agent/vulnerable/residual_trace.act.json --fail-on-findings
+          expect_blocked "attestinfer model_downgrade" attestinfer scan toy_agent/vulnerable/inference_receipt.proof.json --fail-on-findings
 
       - name: Cross-repository adversagen regression
         env:
