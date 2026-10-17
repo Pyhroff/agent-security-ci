@@ -2,6 +2,10 @@ name: CI failure classification
 
 on:
   workflow_run:
+    workflows:
+      - agent security gate
+      - Workflow hardening
+      - README drift
     types: [completed]
 
 permissions:
@@ -62,20 +66,8 @@ $log"
             remediation="Human security review required; do not auto-fix or bypass the gate."
           fi
 
-          cat > /tmp/classification.md <<EOF
-          ## Automated CI failure classification
-
-          **Workflow:** $WORKFLOW
-          **Run:** $RUN_URL
-          **Category:** `$category`
-          **Confidence:** `$confidence`
-
-          ### Recommended remediation
-          $remediation
-
-          ### Safety boundary
-          This classifier is advisory. It does not modify source code, suppress checks, or bypass security gates.
-          EOF
+          printf '## Automated CI failure classification\n\n**Workflow:** %s\n**Run:** %s\n**Category:** %s\n**Confidence:** %s\n\n### Recommended remediation\n%s\n\n### Safety boundary\nThis classifier is advisory. It does not modify source code, suppress checks, or bypass security gates.\n' \
+            "$WORKFLOW" "$RUN_URL" "$category" "$confidence" "$remediation" > /tmp/classification.md
 
       - name: Create classification issue
         env:
@@ -84,4 +76,4 @@ $log"
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          gh issue create --repo "$REPO"             --title "CI classification: run $RUN_ID"             --body-file /tmp/classification.md
+          gh issue create --repo "$REPO" --title "CI classification: run $RUN_ID" --body-file /tmp/classification.md
