@@ -33,6 +33,10 @@ CASES = [
     ("specprove", "vulnerable_formal_protocols", False, ["specprove", "scan-py", "toy_agent/vulnerable/protocol_handlers.py", "--fail-on-findings"]),
     ("weightspecter", "clean_lora_weights", True, ["weightspecter", "scan", "toy_agent/clean/lora_adapter.safetensors", "--fail-on-findings"]),
     ("weightspecter", "vulnerable_lora_weights", False, ["weightspecter", "scan", "toy_agent/vulnerable/lora_adapter.safetensors", "--fail-on-findings"]),
+    ("tokenspecter", "clean_sse_stream", True, ["tokenspecter", "scan", "toy_agent/clean/sse_trace.stream.json", "--fail-on-findings"]),
+    ("tokenspecter", "vulnerable_sse_stream", False, ["tokenspecter", "scan", "toy_agent/vulnerable/sse_trace.stream.json", "--fail-on-findings"]),
+    ("circuitshield", "clean_residual_circuit", True, ["circuitshield", "scan", "toy_agent/clean/residual_trace.act.json", "--fail-on-findings"]),
+    ("circuitshield", "vulnerable_residual_circuit", False, ["circuitshield", "scan", "toy_agent/vulnerable/residual_trace.act.json", "--fail-on-findings"]),
 ]
 
 

@@ -1,0 +1,65 @@
+{
+  "trace_id": "TS-SHAPED-01",
+  "domain_category": "medical",
+  "title": "Constant-Rate Bucket-Shaped Encrypted Medical Diagnosis Stream",
+  "is_shaped": true,
+  "ground_truth_phrase": "DIAGNOSIS: Stage-IV Glioblastoma EGFR-Mutant",
+  "frames": [
+    {
+      "seq_id": 0,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": "DIAGNOSIS:"
+    },
+    {
+      "seq_id": 1,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": " Stage"
+    },
+    {
+      "seq_id": 2,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": "-IV"
+    },
+    {
+      "seq_id": 3,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": " Glioblastoma"
+    },
+    {
+      "seq_id": 4,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": " EGFR"
+    },
+    {
+      "seq_id": 5,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": false,
+      "ground_truth_token": "-Mutant"
+    },
+    {
+      "seq_id": 6,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": true,
+      "ground_truth_token": ""
+    },
+    {
+      "seq_id": 7,
+      "wire_byte_length": 64,
+      "inter_arrival_ms": 25.0,
+      "is_chaff": true,
+      "ground_truth_token": ""
+    }
+  ]
+}

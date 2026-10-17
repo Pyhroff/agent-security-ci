@@ -1,0 +1,51 @@
+{
+  "trace_id": "TS-UNSHAPED-01",
+  "domain_category": "medical",
+  "title": "Unshaped Encrypted Medical Diagnosis Stream",
+  "is_shaped": false,
+  "ground_truth_phrase": "DIAGNOSIS: Stage-IV Glioblastoma EGFR-Mutant",
+  "frames": [
+    {
+      "seq_id": 0,
+      "wire_byte_length": 28,
+      "inter_arrival_ms": 14.2,
+      "is_chaff": false,
+      "ground_truth_token": "DIAGNOSIS:"
+    },
+    {
+      "seq_id": 1,
+      "wire_byte_length": 24,
+      "inter_arrival_ms": 18.545,
+      "is_chaff": false,
+      "ground_truth_token": " Stage"
+    },
+    {
+      "seq_id": 2,
+      "wire_byte_length": 21,
+      "inter_arrival_ms": 24.059,
+      "is_chaff": false,
+      "ground_truth_token": "-IV"
+    },
+    {
+      "seq_id": 3,
+      "wire_byte_length": 31,
+      "inter_arrival_ms": 36.666,
+      "is_chaff": false,
+      "ground_truth_token": " Glioblastoma"
+    },
+    {
+      "seq_id": 4,
+      "wire_byte_length": 23,
+      "inter_arrival_ms": 28.332,
+      "is_chaff": false,
+      "ground_truth_token": " EGFR"
+    },
+    {
+      "seq_id": 5,
+      "wire_byte_length": 25,
+      "inter_arrival_ms": 21.751,
+      "is_chaff": false,
+      "ground_truth_token": "-Mutant"
+    }
+  ]
+}
