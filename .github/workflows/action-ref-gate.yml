@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Check workflow action refs are immutable
         shell: bash
         run: |
@@ -26,3 +30,37 @@ jobs:
             fi
           done < <(grep -hE '^[[:space:]-]*uses:[[:space:]]+' .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null || true)
           exit "$violations"
+
+  diagnostic-output-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prevent raw CI logs from entering issue comments
+        shell: bash
+        run: |
+          set -euo pipefail
+          triage=".github/workflows/ci-failure-triage.yml"
+          classification=".github/workflows/ci-failure-classification.yml"
+          test -f "$triage"
+          test -f "$classification"
+
+          if grep -Eiq '(actions/jobs/.*logs|actions/runs/.*logs|gh run view .*--log)' "$triage"; then
+            echo "::error::Triage workflow must not publish raw job logs in issue comments."
+            exit 1
+          fi
+          echo "Triage raw-log guard passed."
+
+          if grep -Fq 'cat > /tmp/classification.md <<EOF' "$classification"; then
+            echo "::error::Classification report must not use an unquoted heredoc with Markdown backticks."
+            exit 1
+          fi
+          echo "Classification heredoc guard passed."
+
+          grep -Fq 'printf' "$classification"
+          echo "Classification printf check passed."
+          grep -Fq 'Raw job logs are used only for local classification and are not included in the issue body.' "$classification"
+          echo "Classification issue-body log exclusion check passed."
