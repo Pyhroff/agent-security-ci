@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
           python -m pip install --upgrade pip
-          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec; do
+          for repo in mcpaudit loopcheck memsentry ragsentry trainsentry specprove-sec weightspecter; do
             python -m pip install "git+https://x-access-token:${TOOLS_PAT}@github.com/Pyhroff/${repo}.git"
           done
 
@@ -52,6 +52,7 @@ jobs:
           command -v ragsentry
           command -v trainsentry
           command -v specprove
+          command -v weightspecter
 
       - name: Run controlled regression benchmark
         run: |
@@ -115,6 +116,7 @@ jobs:
           ragsentry toy_agent/clean/fake_remediation_doc.md --fail-on high
           trainsentry toy_agent/clean/goal_hijack_training.jsonl --fail-on high
           specprove scan-py toy_agent/clean/protocol_handlers.py --fail-on-findings
+          weightspecter scan toy_agent/clean/lora_adapter.safetensors --fail-on-findings
 
       - name: Vulnerable fixtures must be blocked
         shell: bash
@@ -140,6 +142,7 @@ jobs:
           expect_blocked "ragsentry fake_remediation" ragsentry toy_agent/vulnerable/fake_remediation_doc.md --fail-on high
           expect_blocked "trainsentry goal_hijacking" trainsentry toy_agent/vulnerable/goal_hijack_training.jsonl --fail-on high
           expect_blocked "specprove formal_protocols" specprove scan-py toy_agent/vulnerable/protocol_handlers.py --fail-on-findings
+          expect_blocked "weightspecter lora_weights" weightspecter scan toy_agent/vulnerable/lora_adapter.safetensors --fail-on-findings
 
       - name: Cross-repository adversagen regression
         env:

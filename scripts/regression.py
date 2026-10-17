@@ -31,6 +31,8 @@ CASES = [
     ("trainsentry", "vulnerable_goal_hijack_training", False, ["trainsentry", "toy_agent/vulnerable/goal_hijack_training.jsonl", "--fail-on", "high"]),
     ("specprove", "clean_formal_protocols", True, ["specprove", "scan-py", "toy_agent/clean/protocol_handlers.py", "--fail-on-findings"]),
     ("specprove", "vulnerable_formal_protocols", False, ["specprove", "scan-py", "toy_agent/vulnerable/protocol_handlers.py", "--fail-on-findings"]),
+    ("weightspecter", "clean_lora_weights", True, ["weightspecter", "scan", "toy_agent/clean/lora_adapter.safetensors", "--fail-on-findings"]),
+    ("weightspecter", "vulnerable_lora_weights", False, ["weightspecter", "scan", "toy_agent/vulnerable/lora_adapter.safetensors", "--fail-on-findings"]),
 ]
 
 
