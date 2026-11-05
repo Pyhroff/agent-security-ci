@@ -1,15 +1,9 @@
-# 🧪 agent-security-ci
-
-<div align="center">
-
-**Cross-repository regression infrastructure for the Pyhroff AI-security portfolio.**
+# agent-security-ci
 
 [![CI](https://github.com/Pyhroff/agent-security-ci/actions/workflows/security-gate.yml/badge.svg)](https://github.com/Pyhroff/agent-security-ci/actions/workflows/security-gate.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-</div>
-
----
+**Cross-repository regression infrastructure for the Pyhroff AI-security portfolio.**
 
 ## Purpose
 
@@ -41,69 +35,39 @@ The harness exercises clean, vulnerable, and adversarial fixtures across the por
 
 **Integration drift** — a scanner's CLI, schema, output, or dependency changes break downstream tooling.
 
+## Regression corpus
+
+`scripts/regression.py` runs 26 checked-in cases (13 clean / vulnerable pairs across mcpaudit, loopcheck, memsentry, ragsentry, trainsentry, specprove, weightspecter, tokenspecter, circuitshield and attestinfer) through the real scanner CLIs. A clean fixture must pass and its vulnerable twin must trip the configured severity gate; any mismatch fails CI. Each run writes precision, recall, F1, false-positive rate and per-case exit codes to `benchmark/latest.json` and the workflow summary.
+
+These are **fixture-regression metrics**: the corpus is small, paired and written alongside the scanners, so a perfect score means "nothing regressed", not "the detectors are accurate". See `benchmark/README.md`.
+
+## Adversarial challenge layer
+
+`scripts/challenge.py` runs a non-gating 10-case corpus: one rephrased attack and one benign security-documentation control per scanner (mcpaudit, loopcheck, memsentry, ragsentry, trainsentry). It surfaces weaknesses without blocking releases.
+
+| Run | Precision | Recall | F1 | FPR | TP / FP / TN / FN |
+|---|---:|---:|---:|---:|---|
+| First run (37658926358, commit 3affd73) | 0.200 | 0.200 | 0.200 | 0.800 | 1 / 4 / 1 / 4 |
+| After hardening the five scanners | 1.000 | 1.000 | 1.000 | 0.000 | 5 / 0 / 5 / 0 |
+
+The first run showed the scanners missed rephrased attacks and flagged quoted security guidance. The scanners were then changed to fix exactly those cases, so the second row measures that the observed failures were addressed; the challenge is now a development set, not a held-out test. Held-out evaluations of the detectors live in [aisec-suite's STUDY.md](https://github.com/Pyhroff/aisec-suite/blob/master/docs/STUDY.md).
+
 ## CI posture
 
-Hardened workflows use least-privilege permissions, bounded execution, stale-run cancellation, explicit failure states, and immutable action references where enabled.
-
-Private cross-repository actions require repository-level Actions access to be configured explicitly. The gate does not use personal access tokens or silently bypass inaccessible dependencies.
-
-## Measured regression snapshot
-
-The latest GitHub Actions benchmark executes 16 checked-in cases (8 clean/vulnerable pairs) through the real scanner CLIs.
-
-| Metric | Result |
-|---|---:|
-| Precision | 1.000 |
-| Recall | 1.000 |
-| F1 | 1.000 |
-| False-positive rate | 0.000 |
-| TP / FP / TN / FN | 8 / 0 / 8 / 0 |
-
-These figures are **fixture-regression metrics only**. They are not production detection claims; the corpus is intentionally small and paired. See `benchmark/README.md` for the methodology and measured per-scanner breakdown.
+Workflows use least-privilege permissions, bounded execution, stale-run cancellation, explicit failure states and actions pinned to commit SHAs (enforced by `action-ref-gate.yml`). The security gate installs the scanners from their repositories with a `TOOLS_PAT` repository secret and fails closed if it is missing; the harness's own tests (`tests.yml`) need no secrets.
 
 ## Relationship to aisec-suite
 
-**aisec-suite** = product-facing umbrella and common CLI.
-
-**agent-security-ci** = compatibility and regression harness.
+**aisec-suite** is the product-facing umbrella and CLI; **agent-security-ci** is the cross-scanner compatibility and regression harness around it.
 
 ## Development
 
 ```bash
-python -m pytest -q
+python -m pip install pytest
+python -m pytest -q tests        # harness tests with stub scanners (no private packages needed)
+python scripts/regression.py     # needs the scanner CLIs installed
 ```
 
 ## License
 
 MIT
-
-
-## Adversarial challenge layer
-
-Every gate run also executes a 10-case challenge corpus containing:
-
-- rephrased variants of known attack patterns, testing robustness beyond canonical wording;
-- benign security-context controls containing attack terminology as documentation, testing false-positive resistance.
-
-Challenge metrics are published to the workflow summary and `benchmark/challenge.json`, but **do not fail the release gate**. A challenge miss is a signal to expand scanner tests or improve detection logic, not evidence that the scanner is production-ready.
-
-## Latest adversarial challenge result
-
-Run 37658926358 (commit 3affd73) executed 10 challenge cases: one malicious variant and one benign security-context control per scanner.
-
-| Scanner | Precision | Recall | F1 | FPR | Main signal |
-|---|---:|---:|---:|---:|---|
-| mcpaudit | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased poisoning; flagged benign security wording |
-| loopcheck | 0.500 | 1.000 | 0.667 | 1.000 | caught loop variant; flagged benign repeated verification |
-| memsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
-| ragsentry | 0.000 | 0.000 | 0.000 | 1.000 | missed rephrased injection; flagged quoted security guidance |
-| trainsentry | 1.000 | 0.000 | 0.000 | 0.000 | no false positive, but missed rephrased poisoning |
-| **Overall** | **0.200** | **0.200** | **0.200** | **0.800** | **4 FN / 4 FP / 1 TP / 1 TN** |
-
-This challenge result is intentionally **non-gating**. It demonstrates that the 16-case regression corpus is a compatibility contract, not a realistic detector evaluation. Immediate hardening targets are semantic/context-aware matching for injection detectors and more precise loop repetition criteria.
-
-## Final challenge result
-
-After hardening all five scanners against the observed failure modes, the same 10-case adversarial challenge improved from **precision 0.200 / recall 0.200 / F1 0.200 / FPR 0.800** to **precision 1.000 / recall 1.000 / F1 1.000 / FPR 0.000** (TP=5, FP=0, TN=5, FN=0).
-
-The improvement is specific to this small hand-authored challenge corpus. It is evidence that the identified regression cases were addressed, not a claim of production-world detector accuracy.
