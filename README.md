@@ -37,7 +37,7 @@ The harness exercises clean, vulnerable, and adversarial fixtures across the por
 
 ## Regression corpus
 
-`scripts/regression.py` runs 26 checked-in cases (13 clean / vulnerable pairs across mcpaudit, loopcheck, memsentry, ragsentry, trainsentry, specprove, weightspecter, tokenspecter, circuitshield and attestinfer) through the real scanner CLIs. A clean fixture must pass and its vulnerable twin must trip the configured severity gate; any mismatch fails CI. Each run writes precision, recall, F1, false-positive rate and per-case exit codes to `benchmark/latest.json` and the workflow summary.
+`scripts/regression.py` runs 24 checked-in cases (12 clean / vulnerable pairs across mcpaudit, loopcheck, memsentry, ragsentry, trainsentry, specprove, tokenspecter, circuitshield and attestinfer) through the real scanner CLIs. A clean fixture must pass and its vulnerable twin must trip the configured severity gate; any mismatch fails CI. Each run writes precision, recall, F1, false-positive rate and per-case exit codes to `benchmark/latest.json` and the workflow summary.
 
 These are **fixture-regression metrics**: the corpus is small, paired and written alongside the scanners, so a perfect score means "nothing regressed", not "the detectors are accurate". See `benchmark/README.md`.
 
