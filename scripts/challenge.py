@@ -17,8 +17,8 @@ CASES = [
     ("memsentry", "benign_security_doc", True, ["memsentry","toy_agent/challenge/memory_benign_security.md","--fail-on","high"]),
     ("ragsentry", "rephrased_attack", False, ["ragsentry","toy_agent/challenge/rag_rephrased.md","--fail-on","high"]),
     ("ragsentry", "benign_security_doc", True, ["ragsentry","toy_agent/challenge/rag_benign_security.md","--fail-on","high"]),
-    ("trainsentry", "rephrased_attack", False, ["trainsentry","toy_agent/challenge/training_rephrased.jsonl","--fail-on","high"]),
-    ("trainsentry", "benign_security_doc", True, ["trainsentry","toy_agent/challenge/training_benign_security.jsonl","--fail-on","high"]),
+    ("trainsentry", "rephrased_attack", False, ["trainsentry","scan","toy_agent/challenge/training_rephrased.jsonl","--fail-on","high"]),
+    ("trainsentry", "benign_security_doc", True, ["trainsentry","scan","toy_agent/challenge/training_benign_security.jsonl","--fail-on","high"]),
 ]
 
 def run(cmd):
