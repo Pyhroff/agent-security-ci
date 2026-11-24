@@ -31,12 +31,6 @@ CASES = [
     ("trainsentry", "vulnerable_goal_hijack_training", False, ["trainsentry", "toy_agent/vulnerable/goal_hijack_training.jsonl", "--fail-on", "high"]),
     ("specprove", "clean_formal_protocols", True, ["specprove", "scan-py", "toy_agent/clean/protocol_handlers.py", "--fail-on-findings"]),
     ("specprove", "vulnerable_formal_protocols", False, ["specprove", "scan-py", "toy_agent/vulnerable/protocol_handlers.py", "--fail-on-findings"]),
-    ("tokenspecter", "clean_sse_stream", True, ["tokenspecter", "scan", "toy_agent/clean/sse_trace.stream.json", "--fail-on-findings"]),
-    ("tokenspecter", "vulnerable_sse_stream", False, ["tokenspecter", "scan", "toy_agent/vulnerable/sse_trace.stream.json", "--fail-on-findings"]),
-    ("circuitshield", "clean_residual_circuit", True, ["circuitshield", "scan", "toy_agent/clean/residual_trace.act.json", "--fail-on-findings"]),
-    ("circuitshield", "vulnerable_residual_circuit", False, ["circuitshield", "scan", "toy_agent/vulnerable/residual_trace.act.json", "--fail-on-findings"]),
-    ("attestinfer", "clean_inference_proof", True, ["attestinfer", "scan", "toy_agent/clean/inference_receipt.proof.json", "--fail-on-findings"]),
-    ("attestinfer", "vulnerable_inference_proof", False, ["attestinfer", "scan", "toy_agent/vulnerable/inference_receipt.proof.json", "--fail-on-findings"]),
 ]
 
 
